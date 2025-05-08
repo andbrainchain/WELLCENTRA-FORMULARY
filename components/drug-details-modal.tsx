@@ -25,6 +25,7 @@ export default function DrugDetailsModal({ drug, children }: DrugDetailsModalPro
   const [open, setOpen] = useState(false)
 
   const formatCurrency = (value: string | number) => {
+    if (value === null || value === undefined) return "N/A"
     const num = typeof value === "string" ? Number.parseFloat(value) : value
     return isNaN(num) ? "N/A" : `$${num.toFixed(2)}`
   }

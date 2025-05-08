@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { DownloadIcon, SearchIcon, PlusCircleIcon, ChevronDownIcon, InfoIcon } from "lucide-react"
+import { DownloadIcon, SearchIcon, PlusCircleIcon, ChevronDownIcon } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -34,7 +34,7 @@ export default function FormularyAnalyzer() {
     direction: "asc",
   })
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(20)
+  const [itemsPerPage, setItemsPerPage] = useState(50)
   const [activeTab, setActiveTab] = useState("all")
 
   useEffect(() => {
@@ -47,8 +47,7 @@ export default function FormularyAnalyzer() {
       setIsProcessing(true)
       setError(null)
 
-      // In a real implementation, this would fetch data from the actual spreadsheets
-      // For demonstration, we're using the sample data
+      // Process the data using the provided formularies
       const analysisResults = processFormularies(teamstersData, wellcentraData)
       setResults(analysisResults)
     } catch (err) {
@@ -126,9 +125,9 @@ export default function FormularyAnalyzer() {
     if (activeTab === "matches") {
       filtered = filtered.filter((drug: any) => drug.hasMatch)
     } else if (activeTab === "teamsters") {
-      filtered = filtered.filter((drug: any) => drug.teamsters.length > 0)
+      filtered = filtered.filter((drug: any) => drug.teamsters && drug.teamsters.length > 0)
     } else if (activeTab === "wellcentra") {
-      filtered = filtered.filter((drug: any) => drug.wellcentra.length > 0)
+      filtered = filtered.filter((drug: any) => drug.wellcentra && drug.wellcentra.length > 0)
     }
 
     // Apply search filtering
@@ -178,6 +177,7 @@ export default function FormularyAnalyzer() {
   }
 
   const formatCurrency = (value: string | number) => {
+    if (value === null || value === undefined) return "N/A"
     const num = typeof value === "string" ? Number.parseFloat(value) : value
     return isNaN(num) ? "N/A" : `$${num.toFixed(2)}`
   }
@@ -349,12 +349,12 @@ export default function FormularyAnalyzer() {
                             <TableCell className="font-medium">{drug.drugName}</TableCell>
                             <TableCell>
                               <div className="flex gap-1">
-                                {drug.teamsters.length > 0 && (
+                                {drug.teamsters && drug.teamsters.length > 0 && (
                                   <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                                     Teamsters
                                   </Badge>
                                 )}
-                                {drug.wellcentra.length > 0 && (
+                                {drug.wellcentra && drug.wellcentra.length > 0 && (
                                   <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                                     Wellcentra
                                   </Badge>
@@ -362,7 +362,7 @@ export default function FormularyAnalyzer() {
                               </div>
                             </TableCell>
                             <TableCell>
-                              {drug.teamsters.length > 0 ? (
+                              {drug.teamsters && drug.teamsters.length > 0 ? (
                                 drug.teamsters.length === 1 ? (
                                   formatCurrency(drug.teamstersCost)
                                 ) : (
@@ -388,7 +388,7 @@ export default function FormularyAnalyzer() {
                               )}
                             </TableCell>
                             <TableCell>
-                              {drug.wellcentra.length > 0 ? (
+                              {drug.wellcentra && drug.wellcentra.length > 0 ? (
                                 drug.wellcentra.length === 1 ? (
                                   formatCurrency(drug.wellcentraPrice)
                                 ) : (
@@ -497,16 +497,18 @@ export default function FormularyAnalyzer() {
                           <TableRow key={index}>
                             <TableCell className="font-medium">{drug.drugName}</TableCell>
                             <TableCell>
-                              {drug.teamsters.length > 0 ? drug.teamsters[0]["Generic Name"] || "N/A" : "N/A"}
-                              {drug.teamsters.length > 1 && (
+                              {drug.teamsters && drug.teamsters.length > 0
+                                ? drug.teamsters[0]["Generic Name"] || "N/A"
+                                : "N/A"}
+                              {drug.teamsters && drug.teamsters.length > 1 && (
                                 <span className="text-xs text-muted-foreground ml-1">
                                   (+{drug.teamsters.length - 1} more)
                                 </span>
                               )}
                             </TableCell>
                             <TableCell>
-                              {drug.teamsters.length > 0 ? drug.teamsters[0]["NDC"] || "N/A" : "N/A"}
-                              {drug.teamsters.length > 1 && (
+                              {drug.teamsters && drug.teamsters.length > 0 ? drug.teamsters[0]["NDC"] || "N/A" : "N/A"}
+                              {drug.teamsters && drug.teamsters.length > 1 && (
                                 <span className="text-xs text-muted-foreground ml-1">
                                   (+{drug.teamsters.length - 1} more)
                                 </span>
@@ -545,8 +547,10 @@ export default function FormularyAnalyzer() {
                           <TableRow key={index}>
                             <TableCell className="font-medium">{drug.drugName}</TableCell>
                             <TableCell>
-                              {drug.wellcentra[0]["NDC"] || "N/A"}
-                              {drug.wellcentra.length > 1 && (
+                              {drug.wellcentra && drug.wellcentra.length > 0
+                                ? drug.wellcentra[0]["NDC"] || "N/A"
+                                : "N/A"}
+                              {drug.wellcentra && drug.wellcentra.length > 1 && (
                                 <span className="text-xs text-muted-foreground ml-1">
                                   (+{drug.wellcentra.length - 1} more)
                                 </span>
@@ -554,12 +558,14 @@ export default function FormularyAnalyzer() {
                             </TableCell>
                             <TableCell>{formatCurrency(drug.wellcentraPrice)}</TableCell>
                             <TableCell>
-                              {drug.wellcentra.length > 0
-                                ? formatCurrency(drug.wellcentra[0]["WAC Price"] || 0)
+                              {drug.wellcentra && drug.wellcentra.length > 0
+                                ? formatCurrency(drug.wellcentra[0]["WAC Price"])
                                 : "N/A"}
                             </TableCell>
                             <TableCell>
-                              {drug.wellcentra.length > 0 ? drug.wellcentra[0]["Source Column"] || "N/A" : "N/A"}
+                              {drug.wellcentra && drug.wellcentra.length > 0
+                                ? drug.wellcentra[0]["Source Column"] || "N/A"
+                                : "N/A"}
                             </TableCell>
                             <TableCell>
                               <DrugDetailsModal drug={drug}>
@@ -656,15 +662,7 @@ export default function FormularyAnalyzer() {
               </div>
             </CardContent>
 
-            <CardFooter className="flex justify-between">
-              <Alert variant="default" className="bg-blue-50 text-blue-800 border-blue-200">
-                <InfoIcon className="h-4 w-4" />
-                <AlertTitle>Note</AlertTitle>
-                <AlertDescription>
-                  In a production environment, this application would load all drugs from both spreadsheets. The current
-                  view shows how the interface would handle a large dataset with pagination and filtering.
-                </AlertDescription>
-              </Alert>
+            <CardFooter className="flex justify-center">
               <Button variant="outline" onClick={exportToExcel}>
                 <DownloadIcon className="h-4 w-4 mr-2" />
                 Export Complete Analysis
