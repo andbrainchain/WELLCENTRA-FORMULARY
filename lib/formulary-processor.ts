@@ -1,16 +1,20 @@
 // This is the core processing logic for the formulary data
 
 export function processFormularies(teamstersData: any[], wellcentraData: any[]) {
-  // Add source information to each dataset
-  const processedTeamstersData = teamstersData.map((item) => ({
-    ...item,
-    Source: "Teamsters",
-  }))
+  // Add source information to each dataset and filter out $0 prices
+  const processedTeamstersData = teamstersData
+    .filter((item) => item && item["TOTAL COST"] && Number.parseFloat(item["TOTAL COST"]) > 0)
+    .map((item) => ({
+      ...item,
+      Source: "Teamsters",
+    }))
 
-  const processedWellcentraData = wellcentraData.map((item) => ({
-    ...item,
-    Source: "Wellcentra",
-  }))
+  const processedWellcentraData = wellcentraData
+    .filter((item) => item && item["Lowest Price"] && Number.parseFloat(item["Lowest Price"]) > 0)
+    .map((item) => ({
+      ...item,
+      Source: "Wellcentra",
+    }))
 
   // Merge the datasets
   const mergedData = [...processedTeamstersData, ...processedWellcentraData]

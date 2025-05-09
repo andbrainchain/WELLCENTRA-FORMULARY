@@ -130,6 +130,24 @@ export default function FormularyAnalyzer() {
       filtered = filtered.filter((drug: any) => drug.wellcentra && drug.wellcentra.length > 0)
     }
 
+    // Filter out drugs with $0 price
+    filtered = filtered.filter((drug: any) => {
+      // For Teamsters drugs
+      if (drug.teamsters && drug.teamsters.length > 0) {
+        const teamstersCost = Number.parseFloat(drug.teamstersCost)
+        if (teamstersCost <= 0) return false
+      }
+
+      // For Wellcentra drugs
+      if (drug.wellcentra && drug.wellcentra.length > 0) {
+        const wellcentraPrice = Number.parseFloat(drug.wellcentraPrice)
+        if (wellcentraPrice <= 0) return false
+      }
+
+      // Keep drugs that have at least one non-zero price
+      return true
+    })
+
     // Apply search filtering
     if (searchTerm) {
       filtered = filtered.filter((drug: any) => drug.drugName.toLowerCase().includes(searchTerm.toLowerCase()))
